@@ -116,6 +116,8 @@ def inspect_midi(path: Path) -> dict:
                 raise ValueError("unsupported MIDI event status")
             if at > len(track):
                 raise ValueError("MIDI event data is truncated")
+    if position != len(data):
+        raise ValueError("unexpected trailing data after MIDI tracks")
     if not notes or not note_offs or not matched_notes:
         raise ValueError("MIDI export does not contain a matched note-on and note-off")
     return {"format": format_type, "tracks": track_count, "division": division,

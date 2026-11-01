@@ -1097,8 +1097,21 @@ void SliceLabAudioProcessor::exportMidi(const juce::File& file) {
             auto off=juce::MidiMessage::noteOff(1,firstMidiNote+i); off.setTimeStamp((double)tick+960); sequence.addEvent(off); tick+=960;
         }
         sequence.updateMatchedPairs(); juce::MidiFile midi; midi.setTicksPerQuarterNote(960); midi.addTrack(sequence);
-        auto output=file.createOutputStream(); if(!output || !midi.writeTo(*output)) { std::lock_guard<std::mutex> lock(impl->mutex); impl->error="Could not export MIDI"; return; }
-        std::lock_guard<std::mutex> lock(impl->mutex); impl->status="MIDI exported";
+        juce::MemoryOutputStream data;
+        juce::TemporaryFile temporary(file);
+        bool written=false;
+        if(midi.writeTo(data)) {
+            if(auto output=temporary.getFile().createOutputStream()) {
+                written=output->write(data.getData(),data.getDataSize());
+                output->flush();
+                written=written && output->getStatus().wasOk();
+            }
+        }
+        written=written && temporary.getFile().getSize()==(juce::int64)data.getDataSize();
+        if(!written || std::rename(temporary.getFile().getFullPathName().toRawUTF8(),file.getFullPathName().toRawUTF8())!=0) {
+            std::lock_guard<std::mutex> lock(impl->mutex); impl->error="Could not export MIDI"; return;
+        }
+        std::lock_guard<std::mutex> lock(impl->mutex); impl->error={}; impl->status="MIDI exported";
     });
 }
 juce::Result SliceLabAudioProcessor::importMarkers(const juce::File& file) {

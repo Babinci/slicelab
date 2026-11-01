@@ -240,8 +240,21 @@ def start_job(job: dict, profile: Path, run: Path, timeout: float, keep_open: bo
             raise RuntimeError(f"REAPER exited with status {code} before writing job result")
 
 
+def demo_project_destination(destination: Path) -> Path:
+    """Constrain a new, user-facing inspection copy to the ignored demo folder."""
+    local = (ROOT / "local").resolve()
+    demo = (local / "demo").resolve()
+    project = destination.expanduser().resolve()
+    if (not local.is_relative_to(ROOT.resolve()) or not demo.is_relative_to(local) or
+            project.parent != demo or project.suffix.lower() != ".rpp"):
+        raise ValueError("demo project must be an RPP directly inside local/demo")
+    if project.exists():
+        raise ValueError("refusing to overwrite an existing demo project")
+    return project
+
+
 def open_gui(run: Path, timeout: float, pipewire: bool = False, quantum: int = 512,
-             source: Path | None = None) -> int:
+             source: Path | None = None, destination: Path | None = None) -> int:
     run = run.expanduser().resolve(strict=True)
     allowed = (VERIFY / "reaper-runs").resolve()
     if not run.is_relative_to(allowed):
@@ -252,11 +265,14 @@ def open_gui(run: Path, timeout: float, pipewire: bool = False, quantum: int = 5
         raise ValueError("installed binary changed since this run")
     profile = (VERIFY / "reaper-resource" / run.name).resolve(strict=True)
     name = "inspection-" + uuid.uuid4().hex[:8]
-    project = run / "projects" / (name + ".RPP")
+    project = demo_project_destination(destination) if destination else run / "projects" / (name + ".RPP")
     source = (source or run / "projects/sample_original.RPP").expanduser().resolve(strict=True)
     if not source.is_relative_to((run / "projects").resolve()) or source.suffix != ".RPP":
         raise ValueError("GUI source project must be an RPP inside the selected private run")
-    shutil.copy2(source, project)
+    project.parent.mkdir(parents=True, exist_ok=True)
+    with source.open("rb") as src, project.open("xb") as dst:
+        shutil.copyfileobj(src, dst)
+    shutil.copystat(source, project)
     output = run / "jobs" / ("gui-" + name)
     gui_dir = run / "jobs" / ("gui-snapshots-" + name)
     gui_dir.mkdir()
@@ -733,6 +749,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=50)
     parser.add_argument("--gui-run", type=Path)
     parser.add_argument("--gui-source", type=Path)
+    parser.add_argument("--gui-destination", type=Path)
     parser.add_argument("--gui-snapshot", type=Path)
     parser.add_argument("--gui-save", action="store_true")
     parser.add_argument("--gui-window", type=lambda value: int(value, 0))
@@ -750,6 +767,8 @@ def main() -> int:
     parser.add_argument("--cold-immediate", action="store_true")
     parser.add_argument("--inspect-tempo-map", action="store_true")
     args = parser.parse_args()
+    if args.gui_destination and not args.gui_run:
+        raise ValueError("--gui-destination requires --gui-run")
     if args.gui_snapshot:
         if args.gui_record:
             return record_gui(args.gui_snapshot, args.record_seconds)
@@ -759,7 +778,8 @@ def main() -> int:
             return capture_gui(args.gui_snapshot, args.gui_window)
         return snapshot_gui(args.gui_snapshot, args.timeout, args.gui_save)
     if args.gui_run:
-        return open_gui(args.gui_run, args.timeout, args.pipewire, args.quantum, args.gui_source)
+        return open_gui(args.gui_run, args.timeout, args.pipewire, args.quantum, args.gui_source,
+                        args.gui_destination)
     if args.live_run:
         return open_live(args.live_run, args.live_case, args.live_source, not args.disable_anticipative,
                          args.timeout, args.quantum, args.instrumented)

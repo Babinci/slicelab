@@ -2,11 +2,13 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <thread>
+#include <tuple>
 
 using namespace slicelab;
 namespace {
@@ -60,6 +62,67 @@ double frequency(const std::vector<float>& audio) {
     const int first=4410,last=22050; int crossings=0;
     for(int i=first+1;i<last;++i) if(audio[(size_t)i-1]<=0 && audio[(size_t)i]>0) ++crossings;
     return crossings*44100.0/(last-first);
+}
+void midiExport(const juce::File& dir) {
+    SliceLabAudioProcessor processor;
+    const auto file=dir.getChildFile("replace-midi.mid");
+    const auto initial=juce::String("old destination bytes");
+    const bool fixture=file.replaceWithText(initial);
+    for(int slot:{0,4,13}) {
+        auto pad=processor.snapshot().session.pads[(size_t)slot]; pad.startSeconds=.1; pad.endSeconds=.2;
+        processor.setPad(slot,pad);
+    }
+    using Event=std::tuple<int,bool,int>; // note, on/off, tick
+    auto readComplete=[&](const std::vector<Event>& expected) {
+        juce::MemoryBlock bytes; if(!file.loadFileAsData(bytes) || bytes.getSize()<4 || std::memcmp(bytes.getData(),"MThd",4)!=0) return false;
+        juce::MemoryInputStream input(bytes.getData(),bytes.getSize(),false); juce::MidiFile midi;
+        if(!midi.readFrom(input,false) || midi.getNumTracks()!=1 || midi.getTimeFormat()!=960) return false;
+        const auto* track=midi.getTrack(0); if(!track) return false;
+        std::vector<Event> actual; int endEvents=0;
+        for(int i=0;i<track->getNumEvents();++i) {
+            const auto& message=track->getEventPointer(i)->message;
+            if(message.isNoteOn() || message.isNoteOff()) {
+                if(message.getChannel()!=1 || (message.isNoteOn() && message.getVelocity()!=100)) return false;
+                actual.emplace_back(message.getNoteNumber(),message.isNoteOn(),(int)std::lround(message.getTimeStamp()));
+            } else if(message.isEndOfTrackMetaEvent()) ++endEvents;
+            else return false;
+        }
+        // JUCE's readFrom requires all bytes to belong to the single declared
+        // track, so a valid prefix followed by stale/appended data also fails.
+        return endEvents==1 && actual==expected;
+    };
+    auto waitForFileChange=[&](juce::int64 previousSize) {
+        juce::int64 seen=-1; int stable=0;
+        return waitUntil([&] {
+            const auto size=file.getSize();
+            if(size<=0 || size==previousSize) { seen=size; stable=0; return false; }
+            if(size==seen) ++stable; else { seen=size; stable=0; }
+            return stable>=2 && processor.snapshot().status=="MIDI exported";
+        },5000);
+    };
+    const auto initialSize=file.getSize(); processor.exportMidi(file);
+    const bool firstFinished=fixture && waitForFileChange(initialSize);
+    const auto firstSize=file.getSize();
+    check(firstFinished && readComplete({{36,true,0},{36,false,960},{40,true,960},{40,false,1920},{49,true,1920},{49,false,2880}}),
+          "MIDI export replaces existing bytes with one complete SMF containing the expected notes");
+    processor.deletePad(0); processor.deletePad(4);
+    processor.exportMidi(file); const bool secondFinished=waitForFileChange(firstSize);
+    const auto secondSize=file.getSize();
+    check(secondFinished && secondSize<firstSize && readComplete({{49,true,0},{49,false,960}}),
+          "a shorter MIDI re-export replaces the prior file without stale or appended data");
+    processor.deletePad(13); processor.exportMidi(file); const bool emptyFinished=waitForFileChange(secondSize);
+    check(emptyFinished && file.getSize()<secondSize && readComplete({}), "empty pad export is a complete empty MIDI track");
+
+    const auto blockedDir=dir.getChildFile("read-only-export"), blocked=blockedDir.getChildFile("keep.mid");
+    blockedDir.createDirectory(); const juce::String original("preserve this existing file");
+    const bool made=blocked.replaceWithText(original);
+    const bool permissions=made && blocked.setReadOnly(true) && blockedDir.setReadOnly(true);
+    if(permissions && !blocked.hasWriteAccess() && !blockedDir.hasWriteAccess()) {
+        processor.exportMidi(blocked);
+        const bool error=waitUntil([&] { return processor.snapshot().error.isNotEmpty(); },5000);
+        check(error && blocked.loadFileAsString()==original,"an unwritable MIDI destination reports failure and preserves its original bytes");
+    } else std::cout << "SKIP: read-only MIDI destination cannot be enforced for this user\n";
+    blockedDir.setReadOnly(false); blocked.setReadOnly(false);
 }
 void behavior(const juce::File& dir) {
     const auto wav=dir.getChildFile(juce::String::fromUTF8("śpiew 日本語 source.wav"));
@@ -187,7 +250,7 @@ int main() {
     juce::ScopedJuceInitialiser_GUI gui;
     setenv("SLICELAB_KEY_ANALYZER","off",1);
     const auto dir=juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile("slicelab-features-"+juce::Uuid().toString()); dir.createDirectory();
-    behavior(dir); targetKey(dir); analyzerBoundary(dir);
+    midiExport(dir); behavior(dir); targetKey(dir); analyzerBoundary(dir);
     if(juce::SystemStats::getEnvironmentVariable("SLICELAB_VERIFY_MEMORY",{})=="1") memoryBudget(dir);
     realAnalyzer(); dir.deleteRecursively();
     std::cout << failures << " failure(s)\n";

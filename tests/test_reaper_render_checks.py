@@ -61,6 +61,10 @@ class RenderChecksTest(unittest.TestCase):
             info = render_checks.inspect_midi(path)
             self.assertEqual(info["matched_note_count"], 1)
             self.assertEqual(info["notes"][0]["note"], 36)
+            valid = path.read_bytes()
+            path.write_bytes(valid + valid)
+            with self.assertRaisesRegex(ValueError, "trailing data"):
+                render_checks.inspect_midi(path)
             wrong = bytearray(track)
             wrong[7] = 37
             path.write_bytes(header + b"MTrk" + struct.pack(">I", len(wrong)) + wrong)
@@ -75,6 +79,29 @@ class RenderChecksTest(unittest.TestCase):
                         reaper_run.capture_gui(Path(directory), 1234)
                     self.assertEqual(call.call_count, 1)
                     self.assertEqual(call.call_args.args[0][:2], ["xdotool", "getwindowpid"])
+
+    def test_demo_destination_stays_private_and_never_overwrites(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            demo = root / "local/demo"
+            demo.mkdir(parents=True)
+            with mock.patch.object(reaper_run, "ROOT", root):
+                safe = demo / "SliceLab-demo.RPP"
+                self.assertEqual(reaper_run.demo_project_destination(safe), safe)
+                for invalid in (root / "outside.RPP", demo / "wrong.wav"):
+                    with self.assertRaises(ValueError):
+                        reaper_run.demo_project_destination(invalid)
+                safe.write_text("keep existing project")
+                with self.assertRaises(ValueError):
+                    reaper_run.demo_project_destination(safe)
+                self.assertEqual(safe.read_text(), "keep existing project")
+                safe.unlink()
+                demo.rmdir()
+                outside = root / "outside"
+                outside.mkdir()
+                demo.symlink_to(outside, target_is_directory=True)
+                with self.assertRaises(ValueError):
+                    reaper_run.demo_project_destination(safe)
 
     def test_gui_recording_refuses_an_unrelated_pipewire_node(self):
         objects = [{"id": 10, "type": "PipeWire:Interface:Node", "info": {"props":
