@@ -44,6 +44,8 @@ Development uses independent synthetic fixtures, processor behavior tests, alloc
 
 The final installed binary passed 43/43 REAPER render jobs and 43/43 audio checks, including the highest 64-channel output route, and GUI-enabled pluginval strictness 5. It also passed five short live reference comparisons and a 30-minute octave-Stretch soak at 48 kHz/512 frames with zero sampled REAPER or recorder errors. Behavior suites cover slicing, state, independent tempo/pitch, source replacement, markers, preview clicks, and verified remote results. The results report binds each check to its artifact; historical results do not certify later binaries.
 
+A separate [64-bar beat-map measurement](docs/research/beat-map-audio.md) detected all 256 corrected beats in REAPER within its declared 4 ms combined peak-error bound. The report retains raw errors and explains the impulse-shape allowance.
+
 At the verified 48 kHz/512-frame setting the plugin reports a fixed 20 ms delay; larger prepared host blocks can raise it. Start at a 512-frame device buffer on the tested laptop. This machine does not sustain 32 simultaneous R3-stretched voices live; dense stretched parts can be rendered offline, where all 32 voices passed. Consult the results report for artifact hashes, measured settings, and remaining limits.
 
 ```bash

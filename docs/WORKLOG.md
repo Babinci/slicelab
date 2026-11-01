@@ -7,7 +7,7 @@
 - [x] Phase B: Design the workflow.
 - [x] Phase C: Run the loop.
 - [x] Phase D: Keep the audit trail.
-- [ ] Phase E: Verify and hand back.
+- [x] Phase E: Verify and hand back.
 
 ## Definition of done
 
@@ -88,3 +88,13 @@ Five final-hash 48 kHz/512-frame live captures passed reference PCM comparisons 
 The final-hash soak completed after 1,800.0001 seconds. At 48 kHz/512 frames, the recorder captured 86,482,944 frames with no non-finite values and no completely silent 20-second bucket. All 1,800 sampled REAPER and all 1,800 recorder error counts were zero. The tested voice used +12 semitones in Stretch mode with looping host transport. The actual result is in the ignored `soak-slicelab_soak_0941453a/result.json` evidence directory identified by the host report. This bounded single-voice run does not supersede the measured simultaneous-live-polyphony limit.
 
 The final editor's Separate action validated the supplied WAV's cached four-stem set. Collect saved the source and all four stems alongside `local/demo/SliceLab-demo.RPP` and its preset. A fresh-process reopen independently matched the source and every stem hash, retained 16 transient slices, neutral controls and the full source view, and produced captured audio from a mouse pad. The private GUI checklist records 47 passing checks across explicitly named candidate hashes. The final demo and editor are left open for local testing. The root viewed the valid owned-window screenshot; private media remain ignored.
+
+### Distribution and long-form timing
+
+The first actual package, from documentation checkpoint `477ffe4`, passed an independent comparison of all 5,751 source files with the root and pinned upstream Git blobs. Its 37 binary-package files and 36 leaf checksums matched. The installed, built and packaged VST3 share the final binary hash. The root source was entirely UTF-8 text. The audit found no private audio fingerprints, credential-pattern hits, model weights or local build directories. Upstream example media were limited to their pinned vendor trees. The extracted corresponding-source archive bootstrapped without Git metadata using the existing tools and development headers. This does not establish clean-machine dependency installation or byte reproducibility.
+
+The independent reviewer found the demo's render path still pointed at historical evidence. The host owner corrected it through REAPER to `local/demo/SliceLab-demo-render.wav`, confirmed filename incrementing, saved, and verified unchanged plugin state and collected media. No render overwrote the old evidence.
+
+A final focused Terra worker measured the remaining 64-bar beat-map audio case against the frozen processor and installed VST3. REAPER rendered all 256 drifting-source impulses at the corrected 120 BPM grid with raw peak errors from -1.500 to +2.3125 ms. Eight exceeded 2 ms raw; none exceeded the predeclared 4 ms combined bound with its separately declared 2 ms impulse-shape allowance. Fixed-ratio controls support that allowance for this fixture, not universal music. The public method is `docs/research/beat-map-audio.md`; all protocols, per-beat errors and actual audio remain locally inspectable under `local/verification/beat-map-final/`. The production binary is unchanged.
+
+The handoff is a 0.1.0 Linux testing build with a saved, reopened and audible local demo. APC retains `ship_ready: false` because this machine's measured live stretched-polyphony target is unmet. Ground-truth perfect separation, native proprietary interoperability and universal hardware performance are not claimed. Release manifests and checksums bind the final documentation archives to the frozen tested binary; the final regenerated archives receive an identity check after this report is committed.
