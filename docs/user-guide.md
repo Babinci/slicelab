@@ -16,7 +16,7 @@ Wheel over a waveform to zoom around the pointer. Drag the overview to move the 
 
 Source BPM describes the recording; target BPM describes playback. The source /2 and x2 buttons correct half-time or double-time interpretation. The target /2 and x2 buttons change playback tempo with one click. **SYNC** follows REAPER's tempo; its half/double buttons then change the host multiplier. **TAP** estimates source tempo from repeated clicks.
 
-**STRETCH** changes time and pitch independently. Click it to select **REPITCH**, which couples them like changing playback speed. Global and pad tuning combine. Keyboard mode adds the played interval relative to its root note. The key shown for a selected pad includes its current tuning and repitch setting.
+**STRETCH** changes time and pitch independently. The combined tempo and pad-duration ratio is limited to 0.25–4; extreme combinations clamp to that range. Click it to select **REPITCH**, which couples them like changing playback speed. Global and pad tuning combine with keyboard transposition within the renderer’s total ±24-semitone pitch range. Notes or combined tuning beyond that range clamp to its limit. Keyboard mode adds the played interval relative to its root note. The key shown for a selected pad includes its current tuning and repitch setting.
 
 Use the source-key menu to correct the analyzer's key. The target-key menu transposes global pitch to the nearest matching tonic while preserving major or minor mode. An unknown key disables target-key selection. A detected key is an estimate; override it when needed.
 
@@ -24,7 +24,7 @@ Use the source-key menu to correct the analyzer's key. The target-key menu trans
 
 ## Import cue positions
 
-Choose **FILE → Import markers** to load CSV or TSV containing source seconds and an optional name:
+Choose **FILE → Import markers** to load CSV or TSV containing exactly two columns: source seconds and a name, which may be blank:
 
 ```csv
 seconds,name
@@ -62,7 +62,7 @@ The current recipe is a pinned four-source BS-RoFormer checkpoint, full precisio
 
 ## Save, export, and move a session
 
-Save the REAPER project to preserve controls, pad boundaries, beat anchors, stem references, and editor size. **FILE** also provides preset save/load, selected-pad WAV export, MIDI export, asset collection, and relink.
+Save the REAPER project to preserve controls, pad boundaries, beat anchors, stem references, and editor size. **FILE** also provides preset save/load, selected-pad WAV export, MIDI export, asset collection, and relink. MIDI export writes each occupied pad in pad order as a one-beat note.
 
 Use asset collection before moving a project. Keep its collected source and stems together with the saved preset or project. Relink checks source identity so that an unrelated file cannot silently inherit another recording's slices. Missing media is reported and can be relinked. Presets and REAPER projects store media references rather than embedding the recording.
 
@@ -70,7 +70,7 @@ Undo/redo retain up to 64 edits with a 256 MiB budget for unique historical PCM.
 
 ## Latency and practical polyphony
 
-SliceLab reports an exact 20 ms processing delay to REAPER in Stretch and Repitch modes. REAPER compensates recorded and rendered tracks; live MIDI monitoring still includes this delay plus the audio device buffer. The plugin displays an overload counter when processing cannot meet its budget. An overload silences and resets queued voices rather than replaying stale audio.
+SliceLab normally reports a 20 ms processing delay to REAPER in Stretch and Repitch modes. A prepared host block longer than that raises the delay to at least one block plus one sample; the verified 48 kHz/512-frame setting reports exactly 960 samples (20 ms). REAPER compensates recorded and rendered tracks; live MIDI monitoring still includes this delay plus the audio device buffer. The plugin displays an overload counter when processing cannot meet its budget. An overload silences and resets queued voices rather than replaying stale audio.
 
 Start with a 512-frame audio buffer on this laptop. Independent R3 stretching costs substantially more than neutral playback or Repitch. The measured machine does not sustain 32 simultaneous stretched voices live; all 32 passed offline rendering. Freeze or render dense stretched parts, reduce overlapping voices, or use Repitch when appropriate. A 128-frame buffer is not a verified reliable setting on this installation. See the [actual REAPER results](research/reaper-render-results.md) for measured settings and remaining limits.
 

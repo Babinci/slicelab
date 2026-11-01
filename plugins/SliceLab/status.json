@@ -5,7 +5,7 @@
   "ui_framework": "native-juce",
   "complexity_score": 5,
   "created_at": "2026-11-01T11:49:38Z",
-  "last_modified": "2026-11-01T13:38:05Z",
+  "last_modified": "2026-11-01T15:22:10Z",
   "phase_history": [
     {
       "phase": "ideation",
@@ -30,6 +30,11 @@
     {
       "phase": "code_complete",
       "completed_at": "2026-11-01T13:38:05Z",
+      "framework_selected": "native-juce"
+    },
+    {
+      "phase": "code_complete",
+      "completed_at": "2026-11-01T15:22:10Z",
       "framework_selected": "native-juce"
     }
   ],

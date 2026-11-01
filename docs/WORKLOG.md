@@ -5,8 +5,8 @@
 - [x] Read the Principles section of the poteto-mode skill.
 - [x] Phase A: Frame.
 - [x] Phase B: Design the workflow.
-- [ ] Phase C: Run the loop.
-- [ ] Phase D: Keep the audit trail.
+- [x] Phase C: Run the loop.
+- [x] Phase D: Keep the audit trail.
 - [ ] Phase E: Verify and hand back.
 
 ## Definition of done
@@ -73,3 +73,18 @@ A complete quiet rerun passed 114 engine checks (including two fixture-save chec
 A separate clean checkout of `0fe0151` built the VST3 from scratch with clean pinned APC/JUCE/RubberBand sources. It reused the installed local toolchain and extracted development headers through ignored links. Its binary is `03b48ee1eeb9a22086bc607acb02f28d5948f50e959f53518dad02153a8cf691`. The build is source-reconstructible rather than bit-reproducible: development worker fallback paths and JUCE compilation-time strings differ between build locations/times. Runtime dependencies resolve on the host. The installed and host-verified candidate remains unchanged.
 
 The source-package bootstrap was corrected to support bundled vendors without Git metadata. A Gitless bootstrap check passed using the same local tools/headers. Final extracted-archive verification and package checks remain pending. Actual dropdown choices, undo/redo, preset restore, minimum/large resize and fresh-process size/choice persistence passed in REAPER. Final live capture and the long soak are still separate gates.
+
+
+### Final production revision
+
+Commit `cf2d80a` fixes an existing-file MIDI export defect. The old FileOutputStream appended another SMF. Three red regression assertions reproduced it. The exporter now serializes to memory, checks a sibling temporary file's write/flush/status/length, closes it, and uses POSIX rename without a copy fallback. All four new checks pass. Actual REAPER GUI export to the same path shrank a 170-byte/16-note file to a complete 161-byte/15-note file with no trailing data.
+
+The installed final binary is `16249f7b984354fc28f1e810e6bd54b661ebd00405727ffdd2434dd277bf2221`. It passed the coherent 43/43 host and audio suite, installed and clean-checkout pluginval strictness 5, and the full quiet test run: 114 engine, 41 feature, 27 scheduled, 30 marker/metronome, 27 Python, and both allocation gates with zero failures. Final separation integration passed 54 checks, including an actual remote MP3 result on the exact JUCE timeline. The clean checkout is `cf2d80a`, with binary `0ec73153e5755855999aa3e1cb6fc67e33b31def6d846db8c1ed40bc0fc45573`.
+
+Five final-hash 48 kHz/512-frame live captures passed reference PCM comparisons with zero sampled host/recorder errors. The preceding long run was intentionally stopped after 1,456.9 seconds (24 minutes 17 seconds), with no observed errors; it is interrupted evidence, not a 30-minute pass. A fresh 30-minute +12-semitone Stretch soak of the final hash started at 15:53:17 Warsaw. Its completion, the final collected demo, and actual archive/package checks remain pending at this checkpoint.
+
+### Final live acceptance
+
+The final-hash soak completed after 1,800.0001 seconds. At 48 kHz/512 frames, the recorder captured 86,482,944 frames with no non-finite values and no completely silent 20-second bucket. All 1,800 sampled REAPER and all 1,800 recorder error counts were zero. The tested voice used +12 semitones in Stretch mode with looping host transport. The actual result is in the ignored `soak-slicelab_soak_0941453a/result.json` evidence directory identified by the host report. This bounded single-voice run does not supersede the measured simultaneous-live-polyphony limit.
+
+The final editor's Separate action validated the supplied WAV's cached four-stem set. Collect saved the source and all four stems alongside `local/demo/SliceLab-demo.RPP` and its preset. A fresh-process reopen independently matched the source and every stem hash, retained 16 transient slices, neutral controls and the full source view, and produced captured audio from a mouse pad. The private GUI checklist records 47 passing checks across explicitly named candidate hashes. The final demo and editor are left open for local testing. The root viewed the valid owned-window screenshot; private media remain ignored.

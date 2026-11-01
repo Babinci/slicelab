@@ -4,6 +4,8 @@ An open-source sampling instrument for Linux VST3 and standalone use. SliceLab c
 
 SliceLab is an independent implementation inspired by sampling workflows. It contains no Serato code, branding, artwork, or models. It is not affiliated with Serato.
 
+Version 0.1.0 is a Linux testing build. The measured playback limits below remain part of its handoff.
+
 ## Build and install
 
 The Linux adapter builds through [Audio Plugin Coder](https://github.com/Noizefield/audio-plugin-coder), pinned as a submodule, and its pinned JUCE dependency. The currently tested toolchain is x86-64 Ubuntu with GCC 13. Bootstrap requires Git, GCC/G++, pkg-config, Python 3, uv, apt-get, and dpkg-deb. It downloads development packages into this repository without changing system packages.
@@ -40,16 +42,16 @@ Native BPM and key estimation is included. A separately installed compatible S-K
 
 Development uses independent synthetic fixtures, processor behavior tests, allocation probes, pluginval, actual REAPER renders, and live PipeWire JACK captures. The acceptance plan deliberately distinguishes planned checks from measured results. See [the testing handoff](docs/verification.md), [the REAPER results](docs/research/reaper-render-results.md), [the acceptance plan](docs/research/reaper-verification-plan.md), and [the decision trail](docs/decisions.tsv).
 
-The installed R3 candidate passed 43/43 REAPER render jobs and 43/43 audio checks, including the highest 64-channel output route, and GUI-enabled pluginval strictness 5. Behavior suites cover slicing, state, independent tempo/pitch, source replacement, markers, preview clicks, and verified remote results. Final live and editor checks are tracked separately in the results report; baseline results do not certify later binaries.
+The final installed binary passed 43/43 REAPER render jobs and 43/43 audio checks, including the highest 64-channel output route, and GUI-enabled pluginval strictness 5. It also passed five short live reference comparisons and a 30-minute octave-Stretch soak at 48 kHz/512 frames with zero sampled REAPER or recorder errors. Behavior suites cover slicing, state, independent tempo/pitch, source replacement, markers, preview clicks, and verified remote results. The results report binds each check to its artifact; historical results do not certify later binaries.
 
-The plugin has a fixed 20 ms reported delay. Start at a 512-frame device buffer on the tested laptop. This machine does not sustain 32 simultaneous R3-stretched voices live; dense stretched parts can be rendered offline, where all 32 voices passed. Consult the results report for artifact hashes, measured settings, and remaining limits.
+At the verified 48 kHz/512-frame setting the plugin reports a fixed 20 ms delay; larger prepared host blocks can raise it. Start at a 512-frame device buffer on the tested laptop. This machine does not sustain 32 simultaneous R3-stretched voices live; dense stretched parts can be rendered offline, where all 32 voices passed. Consult the results report for artifact hashes, measured settings, and remaining limits.
 
 ```bash
 uv pip install --python .toolchain/bin/python -r requirements-test.txt
 bash scripts/test.sh
 ```
 
-The private `sample_test.wav` is optional development media and is ignored by Git. Some integration checks require that file, the separately installed key analyzer, the remote worker, or a local REAPER installation; they must report their actual availability rather than silently count as verified.
+The feature tests require FFmpeg to generate their compressed-audio fixtures. The private `sample_test.wav` is optional development media and is ignored by Git. Some integration checks require that file, the separately installed key analyzer, the remote worker, or a local REAPER installation; they must report their actual availability rather than silently count as verified.
 
 ## License
 
