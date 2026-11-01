@@ -1,0 +1,3 @@
+[submodule "vendor/audio-plugin-coder"]
+	path = vendor/audio-plugin-coder
+	url = https://github.com/Noizefield/audio-plugin-coder.git

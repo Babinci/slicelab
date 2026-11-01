@@ -1,0 +1,12 @@
+sample_test.wav
+*.rpp-bak
+*.RPP-bak
+.toolchain/
+.deps/
+build/
+release/
+local/
+__pycache__/
+.pytest_cache/
+*.pyc
+

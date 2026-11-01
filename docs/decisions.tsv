@@ -1,0 +1,7 @@
+ts	phase	decision	why	evidence	result
+2026-11-01T12:00:00+01:00	frame	Create a separate SliceLab source repository with APC as a pinned submodule	Preserve the music workspace and make the framework dependency explicit	.gitmodules	VERIFIED
+2026-11-01T12:00:01+01:00	frame	Keep the authorized sample local and excluded from Git	Development authorization does not imply publishing the recording	.gitignore	VERIFIED
+2026-11-01T11:59:24Z	audit	Correct the initial two log timestamps; they were planning placeholders, not captured event times	Keep the audit record honest without rewriting history	docs/decisions.tsv	Actions verified; exact initial timestamps not captured
+2026-11-01T11:59:24Z	architecture	Choose native JUCE with a preallocated live Rubber Band path	Native input and resizing fit Linux; cached render banks cannot cover arbitrary host tempo changes	docs/IMPLEMENTATION_CONTRACT.md	Design chosen after independent candidates
+2026-11-01T11:59:24Z	toolchain	Build JUCE helper with a user-owned Linux dependency prefix	The laptop lacks development headers and the APC shell builder assumes macOS	local/toolchain-configure.log	VERIFIED helper configuration and build
+2026-11-01T11:59:24Z	separation	Pin four-stem BS-RoFormer with overlap 8 and three-pass augmentation	Use a strong real model with a documented recipe and checkpoint grant	docs/research/stem-implementation.md	Real GPU outputs and cancellation verified; no ground-truth quality score
