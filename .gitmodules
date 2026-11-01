@@ -1,3 +1,6 @@
 [submodule "vendor/audio-plugin-coder"]
 	path = vendor/audio-plugin-coder
 	url = https://github.com/Noizefield/audio-plugin-coder.git
+[submodule "vendor/rubberband"]
+	path = vendor/rubberband
+	url = https://github.com/breakfastquay/rubberband.git

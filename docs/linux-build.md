@@ -14,3 +14,10 @@ bash scripts/build.sh
 ```
 
 Bootstrap places CMake, Ninja, and Ubuntu development packages in ignored repository-local directories. It does not require administrator privileges. The runtime libraries come from the host. On other Linux distributions, install the equivalent development packages and adapt `scripts/env.sh` to their locations.
+
+
+Rubber Band 3.3.0 is a second pinned submodule and is built statically. The CMake adapter applies one exact-match reset-buffer reuse change to a build-directory copy; the vendor checkout stays unchanged. FFTW3 (double precision) and libsamplerate remain host runtime dependencies. A mismatched upstream patch fails configuration.
+
+The tested local tools are GCC 13, CMake 4.4.4, and Ninja 1.13.2. Bootstrap pins the latter two; development packages are resolved from the machine's configured Ubuntu package repositories and are not fully version-pinned. The default compiler concurrency is two jobs, including JUCE's configure-time helper. Set `SLICELAB_BUILD_JOBS` to change it.
+
+`bash scripts/test.sh` runs behavior and allocation checks. The optional Address/UBSan and ThreadSanitizer concurrency targets are excluded from normal builds. Their coverage and any host-specific invocation requirements are recorded in the verification reports; a partially instrumented dependency graph is insufficient to dismiss a race report.

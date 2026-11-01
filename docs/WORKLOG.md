@@ -3,8 +3,8 @@
 ## Workflow checklist
 
 - [x] Read the Principles section of the poteto-mode skill.
-- [ ] Phase A: Frame.
-- [ ] Phase B: Design the workflow.
+- [x] Phase A: Frame.
+- [x] Phase B: Design the workflow.
 - [ ] Phase C: Run the loop.
 - [ ] Phase D: Keep the audit trail.
 - [ ] Phase E: Verify and hand back.
@@ -33,3 +33,32 @@ Use at most three workers at once. Research workers have separate output files. 
 ## Local media
 
 The user-authorized sample is copied to repository-root `sample_test.wav`. The original remains untouched. The sample, generated stems, REAPER projects containing local paths, and audio renders are excluded from the public source repository.
+
+## Verified candidate checkpoint
+
+The installed candidate binary has SHA-256 `1136a85c4251f2c7a22e880a04664a86c7e9d6e9c53aee501452fb6f69a4c928`.
+The complete CMake test run passed: 114 engine checks, 36 processor feature checks,
+27 scheduled-engine checks (including 288 reverse-duration combinations), 30 marker
+and metronome checks (including legacy state migration), and zero allocation failures in the actual processor callback.
+The separation integration helper passed 52 checks. The Python helpers passed 24 tests.
+Pluginval strictness 5 passed with GUI and bus-layout tests enabled. The coherent REAPER
+batch passed 42 host jobs and 42 audio checks; a separate highest-output test passed
+with signal only on channels 63–64. Actual GUI and live soak verification are ongoing.
+
+The address/undefined-behavior sanitizer publication stress completed 892 callbacks
+while replacing 500 assets, with no invalid samples, unreclaimed assets, or sanitizer
+diagnostic. This does not establish every possible concurrency schedule. The initial
+ThreadSanitizer run could not start because of an unexpected memory mapping; no race-free
+claim is made from that attempt.
+
+The physical machine does not sustain 32 simultaneous R3-stretched voices in the
+measured live workload. All 32 work offline and neutral playback is much cheaper.
+Keep this throughput limit visible in the testing handoff. Separation is a real model
+estimate; no perfect-isolation or universal model-ranking claim is established.
+
+
+### Concurrency follow-up
+
+Disabling ASLR for the test process allowed TSan to start, and its initial mixed-instrumentation run reported two command-slot races. The FIFO atomic handoffs were in an uninstrumented JUCE core object. The corrected diagnostic target compiles the full JUCE core translation unit with TSan; a linker map verifies that the uninstrumented archive copy is not selected. An intentional race is detected by the positive control. Three unsuppressed stress runs then passed, totaling 8,926 callbacks during repeated source publication, with no diagnostics, invalid samples, or unreclaimed assets. Engine, stress code, and JUCE core are instrumented; other linked JUCE modules and DSP dependencies are outside this test's instrumentation scope.
+
+Actual REAPER gestures found a dropdown race between periodic model refresh and JUCE's asynchronous ComboBox callback. The editor now updates model-backed choices only when their model value changes. Grid interval, source key, and target key share the fix. This changes the candidate binary and requires a fresh host/editor check; earlier hashes remain historical evidence.

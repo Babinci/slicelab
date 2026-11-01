@@ -38,6 +38,7 @@ struct GlobalSettings {
     double sourceBpm = 120.0;
     double targetBpm = 120.0;
     double beatOffsetSeconds = 0.0;
+    double gridDivisionBeats = 1.0;
     float gainDb = -6.0f;
     float semitones = 0.0f;
     float cents = 0.0f;
@@ -48,6 +49,7 @@ struct GlobalSettings {
     bool keyboardMode = false;
     bool repitch = false;
     bool velocitySensitive = true;
+    bool metronome = false;
     bool snap = true;
     float glideMs = 0.0f;
     int keyOverride = -1;
@@ -99,6 +101,7 @@ struct SampleAsset {
     juce::String detectedKey = "Unknown";
     juce::String camelot;
     float keyConfidence = 0.0f;
+    juce::String keyConfidenceLabel;
     bool stemsReady = false;
     juce::String stemModel;
     juce::String stemManifestPath;
@@ -115,6 +118,8 @@ struct Snapshot {
     double hostBpm = 120.0;
     std::array<float, padCount> activity {};
     float outputPeak = 0.0f;
+    bool previewPlaying = false;
+    bool voicesActive = false;
     bool busy = false;
     float progress = -1.0f;
     juce::String status = "Drop a sample to begin";

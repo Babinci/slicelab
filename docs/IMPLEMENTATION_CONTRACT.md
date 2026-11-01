@@ -4,9 +4,13 @@
 
 Use a native JUCE editor and a fixed voice pool over an immutable source asset. This combines the direct Linux input and host behavior from the native candidate with the explicit state model from the Astra product design. Audio Plugin Coder remains the pinned framework, root build project, and lifecycle record.
 
-A bank-only stretch engine is rejected. Host tempo automation and offline render cannot wait for an asynchronous cache. Use a prepared, bounded Rubber Band real-time pull path over prerecorded memory. Preallocate stretchers and working buffers outside `processBlock`. Source lookahead is available because this is a sampler. A prepared cache can be added only as an optimization. Independent tempo and pitch must work on the live path.
+The implemented path uses synchronous, resumable Rubber Band R3 operations over prerecorded memory. An asynchronous DSP worker was rejected because anticipative host processing may advance sample time faster than wall time. The scheduled engine preallocates stretchers, request/MIDI/PCM rings, and working buffers before playback. Each callback has an operation ceiling and a soft wall-clock budget. Offline mode uses the same renderer without the wall-clock cutoff.
 
-## Ownership
+The reported and physical processing delay is exactly 20 ms, with a minimum larger than the prepared block size. It also applies to neutral and Repitch playback. Deadline overloads clear queued work and voices, produce silence, and increment a visible counter. This is bounded-work recovery rather than a guarantee of every realtime deadline. The measured laptop does not sustain 32 simultaneous R3-stretched voices live; the same 32 voices pass offline.
+
+Rubber Band 3.3.0 is pinned separately and built statically with FFTW3 and libsamplerate. Its reset-time queue entries are reused in a build-directory source copy. A positive-controlled allocator probe verifies the reset path and the actual processor callback under the tested workloads.
+
+## Implementation ownership
 
 - Root owns `Source/Domain.h`, the build and install scripts, product documentation, and final integration.
 - The engine worker owns `Source/SamplerEngine.*`, `Source/PluginProcessor.*`, and engine behavior tests. It may add private engine files. It must preserve the public contract below.
@@ -25,16 +29,21 @@ All paths above are relative to `plugins/SliceLab` except the root scripts and t
 
 ## Public processor API
 
-The class is `SliceLabAudioProcessor`. Its editor is `SliceLabAudioProcessorEditor`. All user commands below run from the message thread. `snapshot()` returns `slicelab::Snapshot`.
+The class is `SliceLabAudioProcessor`. Its editor is `SliceLabAudioProcessorEditor`. All user commands below run from the message thread. The UI command FIFO is single-producer/single-consumer: only the message thread may enqueue preview or trigger commands; only the audio callback consumes them. Host MIDI enters the callback directly. The public trigger methods do not enforce this restriction for third-party callers. `snapshot()` returns `slicelab::Snapshot`.
 
 ```cpp
 slicelab::Snapshot snapshot() const;
 void loadSample(const juce::File&);
+void relinkSample(const juce::File&);
 void setGlobal(const slicelab::GlobalSettings&);
+bool setTargetKey(int tonic);
 void setPad(int index, const slicelab::PadSettings&);
 void selectPad(int index);
 void triggerPad(int index, float velocity, bool noteOn = true);
 void stopAll();
+void triggerNote(int midiNote, float velocity, bool noteOn = true);
+void auditionSource(double sourceSeconds);
+void stopSourcePreview();
 void autoSlice(slicelab::SliceMode mode, int count, float sensitivity);
 void addSlice(double sourceSeconds);
 void deletePad(int index);
@@ -48,6 +57,7 @@ void savePreset(const juce::File&);
 void loadPreset(const juce::File&);
 void exportPad(int index, const juce::File&);
 void exportMidi(const juce::File&);
+juce::Result importMarkers(const juce::File&);
 void collectSample(const juce::File& directory);
 void setBeatAnchors(const std::vector<slicelab::BeatAnchor>&);
 void setViewState(const slicelab::ViewState&);
@@ -57,7 +67,7 @@ void endEditGesture();
 
 Use these names and the domain structures unchanged. Additional private helpers are allowed. `setGlobal` and `setPad` must notify corresponding automatable host parameters. Host parameters include master gain, target BPM, sync, global tune, stem levels and enable states, and the audible per-pad controls. Automation and project restoration use the same state rules as GUI edits.
 
-The additive full-scope fields include explicit Repitch mode, velocity sensitivity, snap, keyboard glide time, key override, independent stem solos, source beat anchors, a stored random seed, and editor view state. A solo does not overwrite prior enable states. Piecewise beat anchors correct source drift. The editor batches a multi-pad or drag edit between `beginEditGesture` and `endEditGesture` so undo restores one user action.
+The additive fields include Repitch mode, velocity sensitivity, snap, keyboard glide time, key override, independent stem solos, source beat anchors, a stored random seed, editor view state, and a default-off source-preview metronome. The metronome parameter is appended after existing host parameters; schema-1 states missing only that new parameter migrate to off. Generic CSV/TSV cue import validates the complete bounded input before one undoable mutation. A solo does not overwrite prior enable states. Piecewise beat anchors correct source drift. The editor batches a multi-pad or drag edit between `beginEditGesture` and `endEditGesture` so undo restores one user action.
 
 ## Separation CLI
 
@@ -67,7 +77,9 @@ The installed worker is `~/.local/share/slicelab/stem_worker.py`. Source is repo
 stem_worker.py separate --input /absolute/source.wav --result /absolute/result.json --status /absolute/status.json --host wojtek-ai-pc --quality best
 ```
 
-Atomic status JSON has `state`, `detail`, and nullable `progress`. Result JSON has `schema`, `input_sha256`, `model`, `model_sha256`, `sample_rate`, `frames`, and a `stems` object with absolute `vocals`, `drums`, `bass`, and `other` WAV paths. C++ validates and decodes all four before replacing its asset. The original is the exact all-stems-on, unity-level path. All disabled means silence. Other combinations sum enabled estimates with their levels. Stem changes must be smoothed.
+Compressed audio and multichannel files are first written from immutable JUCE-decoded PCM to a bit-verified stereo float WAV on the background worker. The returned transport hash is validated before a bound manifest records the original source hash and transport hash separately. This preserves exact source-frame alignment across decoders. Mono/stereo WAV can retain its original transport identity.
+
+Atomic status JSON has `state`, `detail`, and nullable `progress`. Result JSON has `schema`, `input_sha256`, `model`, `model_sha256`, `sample_rate`, `frames`, and a `stems` object with absolute `vocals`, `drums`, `bass`, and `other` WAV paths with mandatory per-stem checksums. Collected manifests can resolve relocated filenames relative to their own directory. C++ validates and decodes all four before replacing its asset. The original is the exact all-stems-on, unity-level path. All disabled means silence. Other combinations sum enabled estimates with their levels. Stem changes must be smoothed.
 
 ## Gates
 
