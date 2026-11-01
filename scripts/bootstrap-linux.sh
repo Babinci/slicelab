@@ -5,8 +5,19 @@ cd "$root"
 command -v uv >/dev/null
 command -v g++ >/dev/null
 command -v pkg-config >/dev/null
-git submodule update --init vendor/audio-plugin-coder vendor/rubberband
-git -C vendor/audio-plugin-coder submodule update --init _tools/JUCE
+if [[ -e .git ]]; then
+    git submodule update --init vendor/audio-plugin-coder vendor/rubberband
+    git -C vendor/audio-plugin-coder submodule update --init _tools/JUCE
+else
+    for source in vendor/audio-plugin-coder/CMakeLists.txt \
+        vendor/audio-plugin-coder/_tools/JUCE/modules/juce_core/juce_core.h \
+        vendor/rubberband/rubberband/RubberBandStretcher.h; do
+        if [[ ! -f "$source" ]]; then
+            printf 'Missing bundled source: %s\n' "$source" >&2
+            exit 1
+        fi
+    done
+fi
 if [[ ! -x .toolchain/bin/cmake ]]; then
     uv venv .toolchain
     uv pip install --python .toolchain/bin/python 'cmake==4.4.4' 'ninja==1.13.2'

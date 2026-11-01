@@ -26,3 +26,20 @@ An individual `R3Stretcher::process` call with 128 input frames was also measure
 - Test the 192 kHz rate, variable and one-frame realtime blocks, rate and layout changes, extreme automation, additional MIDI and UI overflow cases, and 64 output channels. Verify deterministic view handoffs and concurrent publication under ASan/TSan.
 - Improve or explicitly constrain 32-voice stretched startup and steady throughput; the current fail-silent behavior reports failure but does not meet full 32-voice R3 playback. A smaller input quantum alone cannot split an individual FFT analysis window.
 - Rebuild and test the actual VST3 in REAPER with fixed PDC, monitoring, anticipative playback, offline rendering, project restore and the real sample. Measure XRUNs and callback wall time independently of the overload counter.
+
+
+## Later integrated evidence
+
+The earlier remaining-gate list is a checkpoint, not the final acceptance state. Subsequent scheduled-engine tests passed 27 checks, including 288 reverse-duration combinations. The complete processor allocation probe passed with audible single-voice R3 output, zero overloads in its tested branch, and positive controls covering ordinary and aligned allocation/deallocation. The coherent actual VST3 REAPER run passed 42 render jobs and 42 audio checks; a separate 64-channel output boundary test passed. Later GUI-only revisions require their own artifact hashes in the REAPER report.
+
+ASan/UBSan publication stress completed 892 callbacks while replacing 500 assets without diagnostics or unreclaimed assets. Initial TSan command-slot warnings came from mixed instrumentation: the FIFO's atomic handoff was out of line in an uninstrumented JUCE core. Compiling that full translation unit into the TSan target, verifying its linker selection and atomic instrumentation, and detecting a deliberate-race positive control preceded three unsuppressed passes totaling 8,926 callbacks. Other linked JUCE modules and DSP dependencies remain outside this instrumentation scope. This does not prove all possible thread schedules or realtime timing.
+
+To reproduce the optional diagnostic gate on a compatible Linux host:
+
+```bash
+bash scripts/build.sh SliceLabConcurrencyAddressTests SliceLabConcurrencyThreadTests
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 build/plugins/SliceLab/SliceLabConcurrencyAddressTests
+TSAN_OPTIONS=halt_on_error=1 setarch x86_64 -R build/plugins/SliceLab/SliceLabConcurrencyThreadTests
+```
+
+The process-local `setarch` option avoids this host's TSan address-space mapping collision. It does not change system ASLR. The optional `--tsan-positive-control` argument intentionally introduces a race and must produce a diagnostic rather than a passing exit status. The measured live 32-voice stretched throughput deficit and lack of a universal hard 128-frame bound remain.

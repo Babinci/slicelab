@@ -21,3 +21,6 @@ Rubber Band 3.3.0 is a second pinned submodule and is built statically. The CMak
 The tested local tools are GCC 13, CMake 4.4.4, and Ninja 1.13.2. Bootstrap pins the latter two; development packages are resolved from the machine's configured Ubuntu package repositories and are not fully version-pinned. The default compiler concurrency is two jobs, including JUCE's configure-time helper. Set `SLICELAB_BUILD_JOBS` to change it.
 
 `bash scripts/test.sh` runs behavior and allocation checks. The optional Address/UBSan and ThreadSanitizer concurrency targets are excluded from normal builds. Their coverage and any host-specific invocation requirements are recorded in the verification reports; a partially instrumented dependency graph is insufficient to dismiss a race report.
+
+
+The corresponding-source release archive includes APC, its required JUCE tree, and Rubber Band. It can be built after extraction without Git metadata: bootstrap validates those bundled source files and skips submodule commands. A Git checkout instead initializes the pinned submodules normally. The binary package and source archive are paired by SHA-256 in the package manifest.

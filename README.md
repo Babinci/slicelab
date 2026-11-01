@@ -38,9 +38,9 @@ Native BPM and key estimation is included. A separately installed compatible S-K
 
 ## Verification
 
-Development uses independent synthetic fixtures, processor behavior tests, allocation probes, pluginval, actual REAPER renders, and live PipeWire JACK captures. The acceptance plan deliberately distinguishes planned checks from measured results. See [the REAPER results](docs/research/reaper-render-results.md), [the acceptance plan](docs/research/reaper-verification-plan.md), and [the decision trail](docs/decisions.tsv).
+Development uses independent synthetic fixtures, processor behavior tests, allocation probes, pluginval, actual REAPER renders, and live PipeWire JACK captures. The acceptance plan deliberately distinguishes planned checks from measured results. See [the testing handoff](docs/verification.md), [the REAPER results](docs/research/reaper-render-results.md), [the acceptance plan](docs/research/reaper-verification-plan.md), and [the decision trail](docs/decisions.tsv).
 
-The installed R3 candidate passed 42/42 REAPER render jobs and 42/42 audio checks, the highest 64-channel output route, and GUI-enabled pluginval strictness 5. Behavior suites cover slicing, state, independent tempo/pitch, source replacement, markers, preview clicks, and verified remote results. Final live and editor checks are tracked separately in the results report; baseline results do not certify later binaries.
+The installed R3 candidate passed 43/43 REAPER render jobs and 43/43 audio checks, including the highest 64-channel output route, and GUI-enabled pluginval strictness 5. Behavior suites cover slicing, state, independent tempo/pitch, source replacement, markers, preview clicks, and verified remote results. Final live and editor checks are tracked separately in the results report; baseline results do not certify later binaries.
 
 The plugin has a fixed 20 ms reported delay. Start at a 512-frame device buffer on the tested laptop. This machine does not sustain 32 simultaneous R3-stretched voices live; dense stretched parts can be rendered offline, where all 32 voices passed. Consult the results report for artifact hashes, measured settings, and remaining limits.
 

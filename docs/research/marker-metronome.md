@@ -36,3 +36,6 @@ the last marker; the complete import is one undoable action.
 
 This is a documented text interchange format, not a native Serato DJ metadata,
 SLAB, controller, or hardware protocol implementation.
+
+
+The focused suite now passes 30 checks. A dedicated legacy fixture contains exactly the 410 original schema-1 parameters and omits only the new metronome parameter. Restoring it into a session with METRO already enabled switches METRO off while preserving source audio/hash, nondefault tempo/gain/pitch, pad settings, selection, and the beat grid. Duplicate parameter IDs and out-of-range values in otherwise legacy-shaped states are rejected without modifying the destination session.

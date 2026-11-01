@@ -1,0 +1,29 @@
+# Testing handoff
+
+This matrix records observed behavior rather than treating the design plan as a test result. The current installed candidate is `7265e6844ee429ceae41aac5315505584c62d85aab069cc4e0ce398a2d905942`, built from the production source committed in `0fe0151`. Its editor fixes a dropdown event-ordering issue found in the earlier candidate. The actual REAPER report binds each run to its binary hash.
+
+| Workflow | Evidence and result |
+| --- | --- |
+| Native Linux VST3 instrument | Installed in `~/.vst3/SliceLab.vst3`; REAPER 7.78 loads the actual shared library. GUI-enabled pluginval strictness 5 passes on the current candidate. |
+| Source import | Generated WAV, AIFF, FLAC, Ogg and MP3 at Unicode paths pass processor tests. Actual REAPER chooser and file-drop imports matched their source hashes on the previous candidate; current editor follow-up is in progress. |
+| Automatic and manual slicing | Transients, Grid, Equal, Random and Suggest pass processor and actual GUI checks. Favorites, duplicate, octave duplicate, numeric bounds, start/end drags, multi-selection and grouped undo have dedicated checks. All three fixed dropdowns, individual undo/redo, preset restore and fresh-process choice persistence passed in REAPER. |
+| Cue interchange | CSV/TSV parsing, bounds, Unicode names, atomic failure, favorite protection and undo pass. Actual imported named boundaries were checked in REAPER. Native proprietary cue metadata is not implemented. |
+| Tempo, pitch and MIDI | Current R3 candidate passed 43 host jobs and 43 audio checks, including independent tempo/pitch, strict spectral pitch, MIDI offsets, host tempo changes, Repitch, keyboard intervals, velocity, Hold and mono/poly. The binary hash was checked before and after the coherent run. |
+| Beat map and click | Fractional divisions, source offset, piecewise anchors and preview metronome pass focused engine/processor checks. The specified 64-bar drift fixture with a 2 ms bound has not been measured. |
+| Pads, routing and automation | All 32 sequential MIDI mappings and simultaneous stretched voices pass offline. Host master/stem automation and stereo auxiliary routing pass. The 64-channel boundary test sends only to channels 63–64; this does not cover every bus combination. |
+| Remote stems | The real supplied sample and an MP3 decoding fixture completed on the GPU worker. Four returned sources pass checksums, rate/frame count and alignment checks; the format integration suite passes 52 checks. Cancellation, retry and cache identity have actual and protocol evidence. |
+| Separation quality | Real model estimates are available. Ground-truth isolation quality and a universal model ranking are not established; perfect separation is not claimed. |
+| Analysis | Native BPM/chroma analysis and the installed S-KEY/Essentia path work. The provided sample produced F major with high analyzer confidence. Detection remains editable estimation rather than a known-ground-truth musical transcription. |
+| State and portability | Processor tests cover preset/project state, missing media, relink identity, collected stems, memory rejection and undo budgets. The 410-parameter legacy state migration defaults METRO off and preserves existing settings. Actual preset and cold REAPER reopen checks passed. |
+| Export | Actual GUI WAV export contains readable nonzero PCM; exported MIDI contains matched note pairs. Processor/engine export checks cover transformed pads. |
+| Editor and live playback | Default, minimum and large editor sizes plus reopened size persistence passed. Remaining focus and live/long-session checks are in progress; see the host report for final outcomes. |
+| Callback memory and ownership | Positive-controlled whole-processor allocation probe reports zero failures. ASan/UBSan publication stress passes. Three unsuppressed TSan runs pass after instrumenting JUCE core's FIFO synchronization; their engine/core instrumentation does not cover every linked dependency or possible schedule. |
+| Clean source build and distribution | A clean committed-source checkout built the VST3 from scratch with the installed toolchain and headers. Build-location and compilation-time strings prevent a byte-identical hash. Final package and public-tree checks remain separate gates. |
+
+## Practical limits
+
+The processing delay is 20 ms, plus device buffering for live monitoring. A 512-frame device buffer is the starting configuration for this laptop; reliable 128-frame operation is not established. Thirty-two simultaneous R3-stretched voices exceed measured live throughput, although they work offline. The overload counter records fail-silent voice reset; zero counted overloads alone do not prove an audio callback met every wall-clock deadline. Neutral playback and Repitch are much cheaper.
+
+The API has fixed PCM/history budgets and 32 voices. It does not implement SLAB hardware, proprietary Serato algorithms or file formats, a guaranteed 192 kHz/variable-block performance envelope, or perfect source separation. Generic host MIDI and text cue exchange provide the supported interoperability.
+
+Private recordings, stems, REAPER projects and raw audio evidence stay in ignored local directories. Public source and synthetic test generators are sufficient to inspect the implementation; some integration tests additionally require the installed host, optional analyzer, worker and authorized local source.

@@ -33,7 +33,7 @@ seconds,name
 8.500,Hook
 ```
 
-A header is optional. Positions must be increasing, distinct, and within the recording; UTF-8 names and quoted CSV fields are supported. Imported slices end at the next position, with the last ending at the source end. Favorite pads are protected. The complete import is one undo step; invalid files or insufficient free slots leave the pads unchanged. This is text interchange rather than a native Serato DJ cue-file reader.
+A header is optional. Positions must be distinct and within the recording; import sorts them by time; UTF-8 names and quoted CSV fields are supported. Imported slices end at the next position, with the last ending at the source end. Favorite pads are protected. The complete import is one undo step; invalid files or insufficient free slots leave the pads unchanged. This is text interchange rather than a native Serato DJ cue-file reader.
 
 ## Play and edit pads
 
